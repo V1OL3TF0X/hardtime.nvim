@@ -268,6 +268,12 @@ M.config = {
          end,
          length = 4,
       },
+      ["D[aA]"] = {
+         message = function(keys)
+            return "Use C instead of D" .. keys:sub(2)
+         end,
+         length = 2,
+      },
 
       -- hints for unnecessary visual mode
       ["Vgg[dcy=<>]"] = {
