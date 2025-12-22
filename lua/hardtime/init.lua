@@ -106,7 +106,7 @@ local function handler(key, mode)
       end
 
       last_time = util.get_time()
-      return get_return_key(key)
+      return get_return_key(key, mode)
    end
 
    if config.config.notification then
@@ -188,7 +188,6 @@ function M.enable()
       l = vim.api.nvim_get_keymap("l"),
       c = vim.api.nvim_get_keymap("c"),
       t = vim.api.nvim_get_keymap("t"),
-
    }
 
    setup_autocmds()
@@ -207,7 +206,7 @@ function M.enable()
       for key, mode in pairs(keys) do
          if mode then
             vim.keymap.set(mode, key, function()
-               return handler(key)
+               return handler(key, vim.api.nvim_get_mode().mode:lower())
             end, {
                noremap = true,
                expr = true,
