@@ -171,7 +171,19 @@ end
 local clear_autocmds = function()
    vim.api.nvim_clear_autocmds({ group = hardtime_group })
 end
-
+local function setup_handler(key, mode)
+   -- lazy insert proper mappings into mappings for get_return_key
+   if mappings[mode] == nil then
+      mappings[mode] = vim.api.nvim_get_keymap(mode);
+   end
+   vim.keymap.set(mode, key, function()
+      return handler(key, mode)
+   end, {
+      noremap = true,
+      expr = true,
+      desc = "which_key_ignore",
+   })
+end
 function M.enable()
    if M.is_plugin_enabled then
       return
@@ -180,14 +192,6 @@ function M.enable()
    M.is_plugin_enabled = true
    mappings = {
       n = vim.api.nvim_get_keymap("n"),
-      v = vim.api.nvim_get_keymap("v"),
-      s = vim.api.nvim_get_keymap("s"),
-      x = vim.api.nvim_get_keymap("x"),
-      o = vim.api.nvim_get_keymap("o"),
-      i = vim.api.nvim_get_keymap("i"),
-      l = vim.api.nvim_get_keymap("l"),
-      c = vim.api.nvim_get_keymap("c"),
-      t = vim.api.nvim_get_keymap("t"),
    }
 
    setup_autocmds()
@@ -201,17 +205,16 @@ function M.enable()
       config.config.restricted_keys,
       config.config.disabled_keys,
    }
-
    for _, keys in ipairs(keys_groups) do
       for key, mode in pairs(keys) do
          if mode then
-            vim.keymap.set(mode, key, function()
-               return handler(key, vim.api.nvim_get_mode().mode:lower())
-            end, {
-               noremap = true,
-               expr = true,
-               desc = "which_key_ignore",
-            })
+            if type(mode) == "table" then
+               for s_mode in vim.tbl_keys(mode) do
+                  setup_handler(key, s_mode)
+               end
+            else
+               setup_handler(key, mode)
+            end
          end
       end
    end
