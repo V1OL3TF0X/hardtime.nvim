@@ -20,8 +20,8 @@ local function restore_mouse()
    vim.o.mouse = old_mouse_state
 end
 
-local function get_return_key(key)
-   for _, mapping in ipairs(mappings) do
+local function get_return_key(key, mode)
+   for _, mapping in ipairs(mappings[mode]) do
       if mapping.lhs == key then
          if mapping.callback then
             local success, result = pcall(mapping.callback)
@@ -53,14 +53,14 @@ end
 
 local function should_disable_hardtime()
    return match_filetype(vim.bo.ft)
-      or vim.api.nvim_get_option_value("buftype", { buf = 0 }) == "terminal"
-      or vim.fn.reg_executing() ~= ""
-      or vim.fn.reg_recording() ~= ""
+       or vim.api.nvim_get_option_value("buftype", { buf = 0 }) == "terminal"
+       or vim.fn.reg_executing() ~= ""
+       or vim.fn.reg_recording() ~= ""
 end
 
-local function handler(key)
+local function handler(key, mode)
    if should_disable_hardtime() then
-      return get_return_key(key)
+      return get_return_key(key, mode)
    end
 
    local curr_time = util.get_time()
@@ -86,17 +86,17 @@ local function handler(key)
    end
 
    if config.config.restricted_keys[key] == nil then
-      return get_return_key(key)
+      return get_return_key(key, mode)
    end
 
    -- restrict
    local should_reset_key_count = curr_time - last_time > config.config.max_time
    local is_different_key = config.config.allow_different_key
-      and key ~= last_key
+       and key ~= last_key
    if
-      key_count < config.config.max_count
-      or should_reset_key_count
-      or is_different_key
+       key_count < config.config.max_count
+       or should_reset_key_count
+       or is_different_key
    then
       if should_reset_key_count or is_different_key then
          key_count = 1
@@ -126,7 +126,7 @@ local function handler(key)
    end
 
    if config.config.restriction_mode == "hint" then
-      return get_return_key(key)
+      return get_return_key(key, mode)
    end
    return ""
 end
@@ -137,7 +137,7 @@ local function reset_timer()
    end
 
    if
-      not should_disable_hardtime() and config.config.force_exit_insert_mode
+       not should_disable_hardtime() and config.config.force_exit_insert_mode
    then
       timer = vim.defer_fn(util.stopinsert, config.config.max_insert_idle_ms)
    end
@@ -178,7 +178,18 @@ function M.enable()
    end
 
    M.is_plugin_enabled = true
-   mappings = vim.api.nvim_get_keymap("n")
+   mappings = {
+      n = vim.api.nvim_get_keymap("n"),
+      v = vim.api.nvim_get_keymap("v"),
+      s = vim.api.nvim_get_keymap("s"),
+      x = vim.api.nvim_get_keymap("x"),
+      o = vim.api.nvim_get_keymap("o"),
+      i = vim.api.nvim_get_keymap("i"),
+      l = vim.api.nvim_get_keymap("l"),
+      c = vim.api.nvim_get_keymap("c"),
+      t = vim.api.nvim_get_keymap("t"),
+
+   }
 
    setup_autocmds()
 
@@ -282,9 +293,9 @@ local function setup(user_config)
       end
 
       if
-         not config.config.hint
-         or not M.is_plugin_enabled
-         or should_disable_hardtime()
+          not config.config.hint
+          or not M.is_plugin_enabled
+          or should_disable_hardtime()
       then
          return
       end
