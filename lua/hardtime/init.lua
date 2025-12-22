@@ -209,7 +209,7 @@ function M.enable()
       for key, mode in pairs(keys) do
          if mode then
             if type(mode) == "table" then
-               for s_mode in vim.tbl_keys(mode) do
+               for _, s_mode in ipairs(mode) do
                   setup_handler(key, s_mode)
                end
             else
