@@ -53,9 +53,9 @@ end
 
 local function should_disable_hardtime()
    return match_filetype(vim.bo.ft)
-       or vim.api.nvim_get_option_value("buftype", { buf = 0 }) == "terminal"
-       or vim.fn.reg_executing() ~= ""
-       or vim.fn.reg_recording() ~= ""
+      or vim.api.nvim_get_option_value("buftype", { buf = 0 }) == "terminal"
+      or vim.fn.reg_executing() ~= ""
+      or vim.fn.reg_recording() ~= ""
 end
 
 local function handler(key, mode)
@@ -92,11 +92,11 @@ local function handler(key, mode)
    -- restrict
    local should_reset_key_count = curr_time - last_time > config.config.max_time
    local is_different_key = config.config.allow_different_key
-       and key ~= last_key
+      and key ~= last_key
    if
-       key_count < config.config.max_count
-       or should_reset_key_count
-       or is_different_key
+      key_count < config.config.max_count
+      or should_reset_key_count
+      or is_different_key
    then
       if should_reset_key_count or is_different_key then
          key_count = 1
@@ -137,7 +137,7 @@ local function reset_timer()
    end
 
    if
-       not should_disable_hardtime() and config.config.force_exit_insert_mode
+      not should_disable_hardtime() and config.config.force_exit_insert_mode
    then
       timer = vim.defer_fn(util.stopinsert, config.config.max_insert_idle_ms)
    end
@@ -174,7 +174,7 @@ end
 local function setup_handler(key, mode)
    -- lazy insert proper mappings into mappings for get_return_key
    if mappings[mode] == nil then
-      mappings[mode] = vim.api.nvim_get_keymap(mode);
+      mappings[mode] = vim.api.nvim_get_keymap(mode)
    end
    vim.keymap.set(mode, key, function()
       return handler(key, mode)
@@ -295,9 +295,9 @@ local function setup(user_config)
       end
 
       if
-          not config.config.hint
-          or not M.is_plugin_enabled
-          or should_disable_hardtime()
+         not config.config.hint
+         or not M.is_plugin_enabled
+         or should_disable_hardtime()
       then
          return
       end
