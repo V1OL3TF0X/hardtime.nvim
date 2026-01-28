@@ -237,7 +237,19 @@ function M.disable()
 
    for _, keys in ipairs(keys_groups) do
       for key, mode in pairs(keys) do
-         pcall(vim.keymap.del, mode, key)
+         if mode then
+            if type(mode) == "table" then
+               for _, s_mode in ipairs(mode) do
+                  vim.keymap.set(mode, key, function()
+                     get_return_key(key, s_mode)
+                  end)
+               end
+            else
+               vim.keymap.set(mode, key, function()
+                  get_return_key(key, mode)
+               end)
+            end
+         end
       end
    end
 end
