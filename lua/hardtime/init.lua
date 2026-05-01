@@ -19,7 +19,6 @@ end
 local function restore_mouse()
    vim.o.mouse = old_mouse_state
 end
-
 local function get_return_key(key, mode)
    for _, mapping in ipairs(mappings[mode]) do
       if mapping.lhs == key then
@@ -57,9 +56,11 @@ local function should_disable_hardtime()
       or vim.fn.reg_executing() ~= ""
       or vim.fn.reg_recording() ~= ""
 end
+local M = {}
+M.is_plugin_enabled = false
 
 local function handler(key, mode)
-   if should_disable_hardtime() then
+   if should_disable_hardtime() or not M.is_plugin_enabled then
       return get_return_key(key, mode)
    end
 
@@ -143,9 +144,6 @@ local function reset_timer()
    end
 end
 
-local M = {}
-M.is_plugin_enabled = false
-
 local function setup_autocmds()
    vim.api.nvim_create_autocmd("InsertEnter", {
       group = hardtime_group,
@@ -190,33 +188,11 @@ function M.enable()
    end
 
    M.is_plugin_enabled = true
-   mappings = {
-      n = vim.api.nvim_get_keymap("n"),
-   }
 
    setup_autocmds()
 
    if config.config.disable_mouse then
       disable_mouse()
-   end
-
-   local keys_groups = {
-      config.config.resetting_keys,
-      config.config.restricted_keys,
-      config.config.disabled_keys,
-   }
-   for _, keys in ipairs(keys_groups) do
-      for key, mode in pairs(keys) do
-         if mode then
-            if type(mode) == "table" then
-               for _, s_mode in ipairs(mode) do
-                  setup_handler(key, s_mode)
-               end
-            else
-               setup_handler(key, mode)
-            end
-         end
-      end
    end
 end
 
@@ -228,30 +204,6 @@ function M.disable()
    M.is_plugin_enabled = false
    restore_mouse()
    clear_autocmds()
-
-   local keys_groups = {
-      config.config.resetting_keys,
-      config.config.restricted_keys,
-      config.config.disabled_keys,
-   }
-
-   for _, keys in ipairs(keys_groups) do
-      for key, mode in pairs(keys) do
-         if mode then
-            if type(mode) == "table" then
-               for _, s_mode in ipairs(mode) do
-                  vim.keymap.set(mode, key, function()
-                     get_return_key(key, s_mode)
-                  end)
-               end
-            else
-               vim.keymap.set(mode, key, function()
-                  get_return_key(key, mode)
-               end)
-            end
-         end
-      end
-   end
 end
 
 function M.toggle()
@@ -266,6 +218,29 @@ local function setup(user_config)
    user_config = user_config or {}
    config.migrate_old_config(user_config)
    config.config = vim.tbl_deep_extend("force", config.config, user_config)
+   mappings = {
+      n = vim.api.nvim_get_keymap("n"),
+   }
+
+   local keys_groups = {
+      config.config.resetting_keys,
+      config.config.restricted_keys,
+      config.config.disabled_keys,
+   }
+
+   for _, keys in ipairs(keys_groups) do
+      for key, mode in pairs(keys) do
+         if mode then
+            if type(mode) == "table" then
+               for _, s_mode in ipairs(mode) do
+                  setup_handler(key, s_mode)
+               end
+            else
+               setup_handler(key, mode)
+            end
+         end
+      end
+   end
 
    if config.config.enabled then
       M.enable()
